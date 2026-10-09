@@ -1,0 +1,30 @@
+# Optional SSL / HTTPS configuration using Caddy with automated Let's Encrypt certificates
+# Usage:
+#   DOMAIN=your-domain.com docker compose -f docker-compose.yml -f docker-compose.ssl.yml up -d
+services:
+  app:
+    ports: !override [] # Remove direct port mapping so all traffic routes securely through Caddy
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: job_tracker_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN=${DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+    networks:
+      - job_tracker_net
+
+volumes:
+  caddy_data:
+    name: job_assistant_caddy_data
+  caddy_config:
+    name: job_assistant_caddy_config

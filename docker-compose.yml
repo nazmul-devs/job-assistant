@@ -4,19 +4,22 @@ services:
     container_name: job_tracker_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: job_tracker
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_secure_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-job_tracker}
     ports:
-      - "5434:5432"
+      # Bound to localhost (127.0.0.1) by default to prevent exposure to public internet on VPS
+      - "${DB_BIND_IP:-127.0.0.1}:${DB_PORT:-5434}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d job_tracker"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-job_tracker}"]
       interval: 5s
       timeout: 5s
       retries: 10
       start_period: 5s
+    networks:
+      - job_tracker_net
 
   app:
     build:
@@ -25,16 +28,26 @@ services:
     container_name: job_tracker_app
     restart: unless-stopped
     ports:
-      - "${PORT:-4000}:3000"
+      # Defaults to port 80 on VPS for immediate web access without specifying a custom port
+      - "${PORT:-80}:3000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/job_tracker?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_secure_pass}@postgres:5432/${POSTGRES_DB:-job_tracker}?schema=public
       - NODE_ENV=production
       - PORT=3000
-      - AUTO_SYNC_ENABLED=true
-      - JOB_SYNC_INTERVAL_MINUTES=60
+      - APP_URL=${APP_URL:-http://localhost}
+      - AUTO_SYNC_ENABLED=${AUTO_SYNC_ENABLED:-true}
+      - JOB_SYNC_INTERVAL_MINUTES=${JOB_SYNC_INTERVAL_MINUTES:-60}
+      - CRON_SECRET=${CRON_SECRET:-job_assistant_secret_token}
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - job_tracker_net
+
+networks:
+  job_tracker_net:
+    driver: bridge
 
 volumes:
   postgres_data:
+    name: job_assistant_postgres_data

@@ -21,7 +21,7 @@ RUN npx prisma generate
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
-# Production image
+# Production runner image
 FROM base AS runner
 WORKDIR /app
 
@@ -30,7 +30,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Install openssl for prisma engine and dos2unix for entrypoint
+# Install openssl for prisma engine, curl for healthcheck
 RUN apk add --no-cache openssl curl
 
 COPY --from=builder /app/public ./public
@@ -40,9 +40,14 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/docker-entrypoint.sh ./docker-entrypoint.sh
 
+# Ensure Unix line endings and execute permissions on entrypoint
 RUN sed -i 's/\r$//' ./docker-entrypoint.sh && chmod +x ./docker-entrypoint.sh
 
 EXPOSE 3000
+
+# Docker health check
+HEALTHCHECK --interval=20s --timeout=5s --start-period=30s --retries=3 \
+  CMD curl -f http://127.0.0.1:3000/ || exit 1
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["npm", "start"]

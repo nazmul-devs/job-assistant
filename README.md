@@ -1,6 +1,41 @@
 # job-assistant
 
-> **Job Assistant Pro** — A multi-source automated remote job aggregator and application tracker built with Next.js 16, React 19, Tailwind CSS, Prisma, and PostgreSQL.
+> **Job Assistant Pro** — A production-ready, multi-source automated remote job aggregator and application tracker built with Next.js 16, React 19, Tailwind CSS, Prisma, and PostgreSQL.
+
+---
+
+## ⚡ 1-Command VPS Deployment
+
+On your VPS server (Ubuntu/Debian/CentOS), simply clone and run:
+
+```bash
+git clone https://github.com/nazmul-devs/job-assistant.git
+cd job-assistant
+chmod +x deploy.sh && ./deploy.sh
+```
+
+**That's it!** The automated deployment script will:
+1. Verify Docker and Docker Compose.
+2. Initialize `.env` with secure credentials if not already configured.
+3. Launch PostgreSQL 16 container and wait for the database health check.
+4. Synchronize Prisma schemas (`prisma db push`) and seed default candidate profiles.
+5. Build and launch Next.js on port `80` (accessible immediately via your VPS public IP).
+
+### Alternative: Direct Docker Compose
+
+```bash
+docker compose up -d --build
+```
+
+---
+
+## 🌐 Optional Domain & Automatic HTTPS (SSL)
+
+If you have a domain name pointed to your VPS (e.g., `jobs.yourdomain.com`), you can enable automated Let's Encrypt SSL with Caddy in one command:
+
+```bash
+DOMAIN=jobs.yourdomain.com docker compose -f docker-compose.yml -f docker-compose.ssl.yml up -d
+```
 
 ---
 
@@ -36,7 +71,7 @@ Job Assistant Pro integrates with **10 modular job adapters**:
   - `NEW` ➔ `SAVED` ➔ `APPLY` ➔ `APPLIED` ➔ `INTERVIEW` ➔ `TECHNICAL_INTERVIEW` ➔ `FINAL_INTERVIEW` ➔ `OFFER` ➔ `SELECTED` ➔ `REJECTED` ➔ `WITHDRAWN`
 - **Audit History & Timeline:** Tracks timestamped status transitions and application notes per job.
 - **Advanced Filtering & Search:** Filter by source, application status, match score range, remote status, search queries, and custom sorting.
-- **Docker & Compose Ready:** Production multi-stage Dockerfile and `docker-compose.yml` with healthchecks.
+- **Production Hardened:** Non-exposed database port binding (`127.0.0.1`), container healthchecks, and auto-restart policies (`restart: unless-stopped`).
 
 ---
 
@@ -51,24 +86,15 @@ Job Assistant Pro integrates with **10 modular job adapters**:
 
 ---
 
-## 🏁 Getting Started
+## 💻 Local Development (Outside Docker)
 
-### Prerequisites
-
-- Node.js 20+ or 22+
-- PostgreSQL or Docker Desktop
-
-### 1. Clone & Install
+### 1. Install Dependencies
 
 ```bash
-git clone https://github.com/nazmul-devs/job-assistant.git
-cd job-assistant
 npm install
 ```
 
 ### 2. Configure Environment
-
-Copy `.env.example` to `.env`:
 
 ```bash
 cp .env.example .env
@@ -80,7 +106,6 @@ Ensure `DATABASE_URL` points to your PostgreSQL database.
 
 ```bash
 npx prisma db push
-# Optional: Seed initial profile data
 npm run db:seed
 ```
 
@@ -94,31 +119,16 @@ Visit [http://localhost:4001](http://localhost:4001) in your browser.
 
 ---
 
-## 🐳 Running with Docker
+## 🔧 Management & Maintenance Commands
 
-Start both the PostgreSQL database and application container:
-
-```bash
-docker compose up -d
-```
-
-The app will be available at [http://localhost:4000](http://localhost:4000).
-
-To stop the services:
-
-```bash
-docker compose down
-```
-
----
-
-## 🧪 Testing
-
-Run the test suite with Vitest:
-
-```bash
-npm test
-```
+| Action | Command |
+| :--- | :--- |
+| **Start / Deploy** | `./deploy.sh` *(or `docker compose up -d --build`)* |
+| **Stop Services** | `./stop.sh` *(or `docker compose down`)* |
+| **View Live Logs** | `docker compose logs -f app` |
+| **View DB Logs** | `docker compose logs -f postgres` |
+| **Trigger Manual Sync** | `curl -X POST http://localhost/api/jobs/sync` |
+| **Run Tests** | `npm test` |
 
 ---
 
