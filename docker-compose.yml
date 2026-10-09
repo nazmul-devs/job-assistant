@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: job_tracker_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: job_tracker
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d job_tracker"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: job_tracker_app
+    restart: unless-stopped
+    ports:
+      - "${PORT:-4000}:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/job_tracker?schema=public
+      - NODE_ENV=production
+      - PORT=3000
+      - AUTO_SYNC_ENABLED=true
+      - JOB_SYNC_INTERVAL_MINUTES=60
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

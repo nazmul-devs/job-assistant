@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ApplicationStatus {
+  NEW
+  SAVED
+  APPLY
+  APPLIED
+  INTERVIEW
+  TECHNICAL_INTERVIEW
+  FINAL_INTERVIEW
+  OFFER
+  SELECTED
+  REJECTED
+  WITHDRAWN
+}
+
+model CandidateProfile {
+  id                 String   @id @default("default")
+  name               String   @default("My Candidate Profile")
+  targetRoles        String[]
+  skills             String[]
+  minExperienceYears Int      @default(5)
+  remoteOnly         Boolean  @default(true)
+  preferredLocations String[]
+  minSalary          Float?   @default(100000)
+  salaryCurrency     String   @default("BDT")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model Job {
+  id              String            @id @default(cuid())
+  dedupKey        String            @unique
+  source          String
+  externalId      String?
+  title           String
+  company         String
+  companyLogo     String?
+  location        String?
+  isRemote        Boolean           @default(true)
+  salary          String?
+  salaryMin       Float?
+  salaryMax       Float?
+  salaryCurrency  String?
+  description     String
+  jobUrl          String
+  applyUrl        String
+  postedAt        DateTime?
+  matchScore      Int               @default(0)
+  matchDetails    Json?
+  status          ApplicationStatus @default(NEW)
+  notes           String?
+  interviewDate   DateTime?
+  appliedAt       DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  history         JobApplicationHistory[]
+
+  @@index([title])
+  @@index([company])
+  @@index([status])
+  @@index([source])
+  @@index([matchScore])
+  @@index([createdAt])
+  @@index([source, externalId])
+}
+
+model JobApplicationHistory {
+  id         String             @id @default(cuid())
+  jobId      String
+  job        Job                @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  fromStatus ApplicationStatus?
+  toStatus   ApplicationStatus
+  notes      String?
+  createdAt  DateTime           @default(now())
+
+  @@index([jobId])
+  @@index([createdAt])
+}
+
+model SyncLog {
+  id          String    @id @default(cuid())
+  source      String
+  status      String    // SUCCESS, PARTIAL_SUCCESS, FAILED
+  jobsFetched Int       @default(0)
+  jobsSaved   Int       @default(0)
+  error       String?
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@index([startedAt])
+  @@index([source])
+}
