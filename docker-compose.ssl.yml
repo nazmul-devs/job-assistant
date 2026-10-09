@@ -25,6 +25,5 @@ services:
 
 volumes:
   caddy_data:
-    name: job_assistant_caddy_data
   caddy_config:
-    name: job_assistant_caddy_config
+

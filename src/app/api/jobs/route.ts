@@ -11,21 +11,25 @@ export async function GET(req: NextRequest) {
     const source = searchParams.get("source")?.trim();
     const minScore = searchParams.get("minScore");
     const remoteOnly = searchParams.get("remoteOnly");
+    const worldwideOnly = searchParams.get("worldwideOnly");
     const sort = searchParams.get("sort") || "newest";
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20", 10)));
     const skip = (page - 1) * limit;
 
     const where: Prisma.JobWhereInput = {};
+    const andClauses: Prisma.JobWhereInput[] = [];
 
     // Search filter across title, company, location, source
     if (search) {
-      where.OR = [
-        { title: { contains: search, mode: "insensitive" } },
-        { company: { contains: search, mode: "insensitive" } },
-        { location: { contains: search, mode: "insensitive" } },
-        { source: { contains: search, mode: "insensitive" } },
-      ];
+      andClauses.push({
+        OR: [
+          { title: { contains: search, mode: "insensitive" } },
+          { company: { contains: search, mode: "insensitive" } },
+          { location: { contains: search, mode: "insensitive" } },
+          { source: { contains: search, mode: "insensitive" } },
+        ],
+      });
     }
 
     // Status filter
@@ -46,9 +50,29 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Remote filter
-    if (remoteOnly === "true") {
+    // Open Worldwide Remote filter vs general remote filter
+    if (worldwideOnly === "true") {
       where.isRemote = true;
+      andClauses.push({
+        OR: [
+          { location: { contains: "worldwide", mode: "insensitive" } },
+          { location: { contains: "anywhere", mode: "insensitive" } },
+          { location: { contains: "global", mode: "insensitive" } },
+          { location: { contains: "all countries", mode: "insensitive" } },
+          { location: { contains: "international", mode: "insensitive" } },
+          { location: { contains: "everywhere", mode: "insensitive" } },
+          { location: { equals: "Remote", mode: "insensitive" } },
+          { location: { equals: "Worldwide / Remote", mode: "insensitive" } },
+          { location: { equals: "Remote / Worldwide", mode: "insensitive" } },
+          { location: { equals: null } },
+        ],
+      });
+    } else if (remoteOnly === "true") {
+      where.isRemote = true;
+    }
+
+    if (andClauses.length > 0) {
+      where.AND = andClauses;
     }
 
     // Sorting

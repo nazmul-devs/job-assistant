@@ -27,6 +27,7 @@ export default function HomePage() {
     source: "ALL",
     minScore: "",
     remoteOnly: false,
+    worldwideOnly: false,
     sort: "highest_score",
   });
 
@@ -66,6 +67,7 @@ export default function HomePage() {
         }
         if (currentFilters.minScore) params.set("minScore", currentFilters.minScore);
         if (currentFilters.remoteOnly) params.set("remoteOnly", "true");
+        if (currentFilters.worldwideOnly) params.set("worldwideOnly", "true");
         if (currentFilters.sort) params.set("sort", currentFilters.sort);
         params.set("page", String(pageNum));
         params.set("limit", "25");
@@ -253,6 +255,7 @@ export default function HomePage() {
               source: "ALL",
               minScore: "",
               remoteOnly: false,
+              worldwideOnly: false,
               sort: "highest_score",
             });
             setPagination((p) => ({ ...p, page: 1 }));

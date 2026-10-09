@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Search, SlidersHorizontal, RotateCcw } from "lucide-react";
+import { Search, SlidersHorizontal, RotateCcw, Globe } from "lucide-react";
 import { ApplicationStatus, JobSource } from "@/types/job";
 
 export interface FilterState {
@@ -10,6 +10,7 @@ export interface FilterState {
   source: string;
   minScore: string;
   remoteOnly: boolean;
+  worldwideOnly: boolean;
   sort: string;
 }
 
@@ -55,6 +56,12 @@ const SORT_OPTIONS: { label: string; value: string }[] = [
   { label: "Company (A-Z)", value: "company" },
   { label: "Job Title (A-Z)", value: "title" },
   { label: "Status", value: "status" },
+];
+
+const WORKPLACE_OPTIONS: { label: string; value: string }[] = [
+  { label: "All Workplaces", value: "ALL" },
+  { label: "Remote Only", value: "REMOTE" },
+  { label: "🌐 Open Worldwide", value: "WORLDWIDE" },
 ];
 
 export const FilterBar: React.FC<FilterBarProps> = ({
@@ -117,12 +124,65 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             <option value="40">40%+ (Moderate)</option>
           </select>
 
+          {/* Workplace / Remote Select */}
+          <select
+            value={filters.worldwideOnly ? "WORLDWIDE" : filters.remoteOnly ? "REMOTE" : "ALL"}
+            onChange={(e) => {
+              const val = e.target.value;
+              onChange({
+                ...filters,
+                remoteOnly: val === "REMOTE" || val === "WORLDWIDE",
+                worldwideOnly: val === "WORLDWIDE",
+              });
+            }}
+            className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+          >
+            {WORKPLACE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+
+          {/* Open Worldwide Remote Checkbox */}
+          <label
+            title="Show only jobs open to applicants worldwide (no geo-restrictions)"
+            className={`inline-flex items-center space-x-2 px-3 py-2 border rounded-lg text-sm cursor-pointer transition-colors ${
+              filters.worldwideOnly
+                ? "bg-blue-600/20 border-blue-500/50 text-blue-300"
+                : "bg-slate-950 border-slate-800 text-slate-300 hover:bg-slate-900"
+            }`}
+          >
+            <input
+              type="checkbox"
+              checked={filters.worldwideOnly}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                onChange({
+                  ...filters,
+                  worldwideOnly: checked,
+                  remoteOnly: checked ? true : filters.remoteOnly,
+                });
+              }}
+              className="rounded border-slate-700 text-blue-600 focus:ring-blue-500 bg-slate-800"
+            />
+            <Globe className="w-3.5 h-3.5 text-blue-400" />
+            <span>Open Worldwide</span>
+          </label>
+
           {/* Remote Only Toggle */}
           <label className="inline-flex items-center space-x-2 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-300 cursor-pointer hover:bg-slate-900 transition-colors">
             <input
               type="checkbox"
               checked={filters.remoteOnly}
-              onChange={(e) => onChange({ ...filters, remoteOnly: e.target.checked })}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                onChange({
+                  ...filters,
+                  remoteOnly: checked,
+                  worldwideOnly: !checked ? false : filters.worldwideOnly,
+                });
+              }}
               className="rounded border-slate-700 text-blue-600 focus:ring-blue-500 bg-slate-800"
             />
             <span>Remote Only</span>

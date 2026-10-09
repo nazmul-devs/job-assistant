@@ -18,8 +18,6 @@ services:
       timeout: 5s
       retries: 10
       start_period: 5s
-    networks:
-      - job_tracker_net
 
   app:
     build:
@@ -41,13 +39,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    networks:
-      - job_tracker_net
-
-networks:
-  job_tracker_net:
-    driver: bridge
 
 volumes:
   postgres_data:
-    name: job_assistant_postgres_data

@@ -185,9 +185,26 @@ export const JobsTable: React.FC<JobsTableProps> = ({
                       <span className="truncate max-w-[130px]">{job.location || "Remote"}</span>
                     </div>
                     {job.isRemote && (
-                      <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 text-[10px] font-medium rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mt-1">
+                      <span
+                        className={`inline-flex items-center space-x-1 px-1.5 py-0.5 text-[10px] font-medium rounded mt-1 border ${
+                          job.location &&
+                          (job.location.toLowerCase().includes("worldwide") ||
+                            job.location.toLowerCase().includes("anywhere") ||
+                            job.location.toLowerCase().includes("global") ||
+                            job.location.toLowerCase() === "remote")
+                            ? "bg-blue-500/10 text-blue-400 border-blue-500/25"
+                            : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                        }`}
+                      >
                         <Globe2 className="w-2.5 h-2.5" />
-                        <span>Remote</span>
+                        <span>
+                          {job.location &&
+                          (job.location.toLowerCase().includes("worldwide") ||
+                            job.location.toLowerCase().includes("anywhere") ||
+                            job.location.toLowerCase().includes("global"))
+                            ? "Worldwide Remote"
+                            : "Remote"}
+                        </span>
                       </span>
                     )}
                   </td>
