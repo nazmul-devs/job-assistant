@@ -49,7 +49,8 @@ if [ -f .env ]; then
   set +a
 fi
 
-APP_PORT="${PORT:-80}"
+APP_PORT="${PORT:-4000}"
+APP_HOST="${APP_BIND_IP:-127.0.0.1}"
 
 echo -e "${BLUE}[1/3] Building and starting Docker containers...${NC}"
 $DOCKER_COMPOSE up -d --build --remove-orphans
@@ -61,7 +62,7 @@ MAX_ATTEMPTS=35
 until [ "$ATTEMPTS" -ge "$MAX_ATTEMPTS" ]; do
   STATUS=$(docker inspect --format='{{.State.Status}}' job_tracker_app 2>/dev/null || echo "starting")
   if [ "$STATUS" = "running" ]; then
-    if curl -s -f -o /dev/null "http://127.0.0.1:${APP_PORT}" 2>/dev/null || curl -s -f -o /dev/null "http://localhost:${APP_PORT}" 2>/dev/null; then
+    if curl -s -f -o /dev/null "http://${APP_HOST}:${APP_PORT}" 2>/dev/null || curl -s -f -o /dev/null "http://127.0.0.1:${APP_PORT}" 2>/dev/null; then
       break
     fi
   fi
@@ -73,7 +74,8 @@ echo ""
 echo -e "${GREEN}======================================================${NC}"
 echo -e "${GREEN}  🚀 Job Assistant Pro is successfully running!       ${NC}"
 echo -e "${GREEN}======================================================${NC}"
-echo -e "Access URL:        ${BLUE}http://localhost:${APP_PORT}${NC} (or your VPS IP / domain)"
+echo -e "Internal URL:      ${BLUE}http://${APP_HOST}:${APP_PORT}${NC}"
+echo -e "Nginx Reverse:     Point Nginx proxy_pass to http://${APP_HOST}:${APP_PORT}"
 echo -e "Database:          PostgreSQL 16 (Healthchecked, persistent volume)"
 echo -e "Job APIs:          10 Sources active (auto-sync enabled)"
 echo ""
@@ -81,5 +83,5 @@ echo "Useful Commands:"
 echo "  • View live logs:     $DOCKER_COMPOSE logs -f app"
 echo "  • Restart container:  $DOCKER_COMPOSE restart"
 echo "  • Stop services:      ./stop.sh (or $DOCKER_COMPOSE down)"
-echo "  • Sync jobs manually: curl -X POST http://localhost:${APP_PORT}/api/jobs/sync"
+echo "  • Sync jobs manually: curl -X POST http://127.0.0.1:${APP_PORT}/api/jobs/sync"
 echo -e "${GREEN}======================================================${NC}"

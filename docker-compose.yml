@@ -26,8 +26,8 @@ services:
     container_name: job_tracker_app
     restart: unless-stopped
     ports:
-      # Defaults to port 80 on VPS for immediate web access without specifying a custom port
-      - "${PORT:-80}:3000"
+      # Bound to localhost (127.0.0.1:4000) so Nginx can reverse-proxy without port 80 conflicts
+      - "${APP_BIND_IP:-127.0.0.1}:${PORT:-4000}:3000"
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_secure_pass}@postgres:5432/${POSTGRES_DB:-job_tracker}?schema=public
       - NODE_ENV=production

@@ -6,6 +6,8 @@
 
 ## ⚡ 1-Command VPS Deployment
 
+> 📖 **Full Nginx & SSL Setup Guide:** See the dedicated [**DEPLOYMENT.md**](DEPLOYMENT.md) for complete copy-paste instructions.
+
 On your VPS server (Ubuntu/Debian/CentOS), simply clone and run:
 
 ```bash
@@ -19,7 +21,7 @@ chmod +x deploy.sh && ./deploy.sh
 2. Initialize `.env` with secure credentials if not already configured.
 3. Launch PostgreSQL 16 container and wait for the database health check.
 4. Synchronize Prisma schemas (`prisma db push`) and seed default candidate profiles.
-5. Build and launch Next.js on port `80` (accessible immediately via your VPS public IP).
+5. Build and launch Next.js locally on port `4000` (ready for Nginx reverse-proxying via [`nginx/job-assistant.conf`](nginx/job-assistant.conf)).
 
 ### Alternative: Direct Docker Compose
 
