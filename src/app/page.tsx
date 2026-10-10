@@ -217,7 +217,7 @@ export default function HomePage() {
         lastSyncError={lastSyncError}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Welcome Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between pb-2 border-b border-slate-900 gap-2">
           <div>

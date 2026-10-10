@@ -66,7 +66,7 @@ export async function GET() {
       withdrawnCount: statusMap["WITHDRAWN"] || 0,
       highMatchCount,
       statusBreakdown: statusMap,
-      sourcesBreakdown: sourceCounts.map((s) => ({
+      sourcesBreakdown: sourceCounts.map((s: { source: string; _count: { _all: number } }) => ({
         source: s.source,
         count: s._count._all,
       })),

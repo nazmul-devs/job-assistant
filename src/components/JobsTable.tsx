@@ -168,7 +168,7 @@ export const JobsTable: React.FC<JobsTableProps> = ({
                   className="hover:bg-slate-850/60 transition-colors group"
                 >
                   {/* Job Title & Company */}
-                  <td className="py-3.5 px-4 max-w-xs">
+                  <td className="py-3.5 px-4 max-w-xs md:max-w-md lg:max-w-lg">
                     <div className="font-semibold text-white group-hover:text-blue-400 transition-colors truncate">
                       {job.title}
                     </div>
@@ -182,7 +182,7 @@ export const JobsTable: React.FC<JobsTableProps> = ({
                   <td className="py-3.5 px-4">
                     <div className="flex items-center space-x-1 text-xs text-slate-300">
                       <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <span className="truncate max-w-[130px]">{job.location || "Remote"}</span>
+                      <span className="truncate max-w-[140px] lg:max-w-[220px]">{job.location || "Remote"}</span>
                     </div>
                     {job.isRemote && (
                       <span
