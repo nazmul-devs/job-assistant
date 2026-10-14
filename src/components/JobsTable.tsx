@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Globe2,
+  Trash2,
 } from "lucide-react";
 import { ApplicationStatus, MatchDetails } from "@/types/job";
 
@@ -45,6 +46,7 @@ interface JobsTableProps {
   onPageChange: (newPage: number) => void;
   onStatusChange: (jobId: string, newStatus: ApplicationStatus) => void;
   onViewDetails: (job: JobItem) => void;
+  onDeleteJob?: (jobId: string) => Promise<void> | void;
 }
 
 const STATUS_CONFIG: Record<
@@ -98,6 +100,7 @@ export const JobsTable: React.FC<JobsTableProps> = ({
   onPageChange,
   onStatusChange,
   onViewDetails,
+  onDeleteJob,
 }) => {
   const getScoreBadge = (score: number) => {
     if (score >= 75) {
@@ -283,6 +286,20 @@ export const JobsTable: React.FC<JobsTableProps> = ({
                         <span>Apply</span>
                         <ExternalLink className="w-3 h-3 ml-0.5" />
                       </a>
+
+                      {onDeleteJob && (
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`Are you sure you want to delete "${job.title}" at ${job.company}?`)) {
+                              onDeleteJob(job.id);
+                            }
+                          }}
+                          className="p-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 border border-transparent hover:border-rose-900/40 transition-colors cursor-pointer"
+                          title="Delete Job"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

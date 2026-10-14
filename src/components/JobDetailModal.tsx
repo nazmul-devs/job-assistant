@@ -13,6 +13,7 @@ import {
   Clock,
   Briefcase,
   Layers,
+  Trash2,
 } from "lucide-react";
 import { ApplicationStatus, MatchDetails } from "@/types/job";
 import { JobItem } from "./JobsTable";
@@ -35,6 +36,7 @@ interface JobDetailModalProps {
     notes?: string,
     interviewDate?: string | null
   ) => Promise<void>;
+  onDeleteJob?: (jobId: string) => Promise<void> | void;
 }
 
 export const JobDetailModal: React.FC<JobDetailModalProps> = ({
@@ -42,6 +44,7 @@ export const JobDetailModal: React.FC<JobDetailModalProps> = ({
   isOpen,
   onClose,
   onUpdateStatusAndNotes,
+  onDeleteJob,
 }) => {
   const [activeTab, setActiveTab] = useState<"description" | "timeline" | "notes">("description");
   const [status, setStatus] = useState<ApplicationStatus>(job?.status || "NEW");
@@ -50,6 +53,7 @@ export const JobDetailModal: React.FC<JobDetailModalProps> = ({
     job?.interviewDate ? job.interviewDate.substring(0, 10) : ""
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [fullDescription, setFullDescription] = useState<string>("");
@@ -100,6 +104,23 @@ export const JobDetailModal: React.FC<JobDetailModalProps> = ({
       }
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!job || !onDeleteJob) return;
+    if (
+      window.confirm(
+        `Are you sure you want to permanently delete "${job.title}" at ${job.company}?`
+      )
+    ) {
+      setIsDeleting(true);
+      try {
+        await onDeleteJob(job.id);
+        onClose();
+      } finally {
+        setIsDeleting(false);
+      }
     }
   };
 
@@ -203,6 +224,19 @@ export const JobDetailModal: React.FC<JobDetailModalProps> = ({
                 </>
               )}
             </button>
+
+            {onDeleteJob && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/50 text-rose-300 hover:text-rose-100 font-semibold transition-all cursor-pointer"
+                title="Delete this job permanently"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{isDeleting ? "Deleting..." : "Delete"}</span>
+              </button>
+            )}
           </div>
         </div>
 

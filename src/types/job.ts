@@ -95,3 +95,28 @@ export interface AggregatedSyncResult {
   durationMs: number;
   sources: SyncResult[];
 }
+
+export type DateRangeFilter =
+  | "all"
+  | "today"
+  | "2days"
+  | "week"
+  | "14days"
+  | "month";
+
+export interface CleanupJobsRequest {
+  action: "preview" | "delete";
+  olderThanDays: number;
+  statuses?: ApplicationStatus[];
+  keepActiveApplications?: boolean;
+  source?: string;
+}
+
+export interface CleanupJobsResult {
+  success: boolean;
+  count: number;
+  deleted?: number;
+  sampleTitles?: string[];
+  message?: string;
+  error?: string;
+}

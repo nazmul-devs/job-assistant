@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Search, SlidersHorizontal, RotateCcw, Globe } from "lucide-react";
+import { Search, SlidersHorizontal, RotateCcw, Globe, Calendar, Trash2 } from "lucide-react";
 import { ApplicationStatus, JobSource } from "@/types/job";
 
 export interface FilterState {
@@ -12,12 +12,14 @@ export interface FilterState {
   remoteOnly: boolean;
   worldwideOnly: boolean;
   sort: string;
+  dateRange: string;
 }
 
 interface FilterBarProps {
   filters: FilterState;
   onChange: (newFilters: FilterState) => void;
   onReset: () => void;
+  onOpenCleanup?: () => void;
 }
 
 const STATUS_OPTIONS: { label: string; value: string }[] = [
@@ -64,10 +66,20 @@ const WORKPLACE_OPTIONS: { label: string; value: string }[] = [
   { label: "🌐 Open Worldwide", value: "WORLDWIDE" },
 ];
 
+const DATE_OPTIONS: { label: string; value: string }[] = [
+  { label: "All Time", value: "all" },
+  { label: "Today (24h)", value: "today" },
+  { label: "Last 2 Days (48h)", value: "2days" },
+  { label: "Last 7 Days (Week)", value: "week" },
+  { label: "Last 14 Days", value: "14days" },
+  { label: "Last 30 Days (Month)", value: "month" },
+];
+
 export const FilterBar: React.FC<FilterBarProps> = ({
   filters,
   onChange,
   onReset,
+  onOpenCleanup,
 }) => {
   return (
     <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 mb-6 shadow-sm">
@@ -188,6 +200,23 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             <span>Remote Only</span>
           </label>
 
+          {/* Date Filter (Today, 2 days, week, month) */}
+          <div className="flex items-center space-x-1.5">
+            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+            <select
+              value={filters.dateRange || "all"}
+              onChange={(e) => onChange({ ...filters, dateRange: e.target.value })}
+              className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+              title="Filter by posting date"
+            >
+              {DATE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Sort */}
           <div className="flex items-center space-x-1.5">
             <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
@@ -212,6 +241,18 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           >
             <RotateCcw className="w-4 h-4" />
           </button>
+
+          {/* Clean / Delete Previous Jobs */}
+          {onOpenCleanup && (
+            <button
+              onClick={onOpenCleanup}
+              title="Clean or bulk-delete stale/previous jobs"
+              className="inline-flex items-center space-x-1.5 px-3 py-2 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/50 text-rose-300 hover:text-rose-100 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+              <span>Clean Old Jobs</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -12,6 +12,7 @@ export async function GET(req: NextRequest) {
     const minScore = searchParams.get("minScore");
     const remoteOnly = searchParams.get("remoteOnly");
     const worldwideOnly = searchParams.get("worldwideOnly");
+    const dateRange = searchParams.get("dateRange")?.trim();
     const sort = searchParams.get("sort") || "newest";
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20", 10)));
@@ -19,6 +20,31 @@ export async function GET(req: NextRequest) {
 
     const where: Prisma.JobWhereInput = {};
     const andClauses: Prisma.JobWhereInput[] = [];
+
+    // Date range filter (today, 2days, week, 14days, month)
+    if (dateRange && dateRange !== "all") {
+      let days = 0;
+      if (dateRange === "today" || dateRange === "24h") days = 1;
+      else if (dateRange === "2days" || dateRange === "48h") days = 2;
+      else if (dateRange === "week" || dateRange === "7days") days = 7;
+      else if (dateRange === "14days") days = 14;
+      else if (dateRange === "month" || dateRange === "30days") days = 30;
+
+      if (days > 0) {
+        const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+        andClauses.push({
+          OR: [
+            { postedAt: { gte: cutoff } },
+            {
+              AND: [
+                { postedAt: null },
+                { createdAt: { gte: cutoff } },
+              ],
+            },
+          ],
+        });
+      }
+    }
 
     // Search filter across title, company, location, source
     if (search) {
@@ -158,6 +184,66 @@ export async function GET(req: NextRequest) {
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Error querying jobs";
     console.error("[GET /api/jobs] Error:", err);
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const body = await req.json().catch(() => ({}));
+    const { ids, olderThanDays, statuses, keepActiveApplications = true } = body;
+
+    const where: Prisma.JobWhereInput = {};
+
+    if (Array.isArray(ids) && ids.length > 0) {
+      where.id = { in: ids };
+    } else if (typeof olderThanDays === "number") {
+      const cutoff = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000);
+      where.OR = [
+        { postedAt: { lt: cutoff } },
+        {
+          AND: [
+            { postedAt: null },
+            { createdAt: { lt: cutoff } },
+          ],
+        },
+      ];
+
+      if (Array.isArray(statuses) && statuses.length > 0) {
+        where.status = { in: statuses as ApplicationStatus[] };
+      }
+
+      if (keepActiveApplications) {
+        where.status = {
+          notIn: [
+            ApplicationStatus.SAVED,
+            ApplicationStatus.APPLY,
+            ApplicationStatus.APPLIED,
+            ApplicationStatus.INTERVIEW,
+            ApplicationStatus.TECHNICAL_INTERVIEW,
+            ApplicationStatus.FINAL_INTERVIEW,
+            ApplicationStatus.OFFER,
+            ApplicationStatus.SELECTED,
+          ],
+        };
+      }
+    } else {
+      return NextResponse.json(
+        { success: false, error: "Missing ids or cleanup parameters (olderThanDays)" },
+        { status: 400 }
+      );
+    }
+
+    const result = await prisma.job.deleteMany({ where });
+
+    return NextResponse.json({
+      success: true,
+      count: result.count,
+      message: `Successfully deleted ${result.count} job(s)`,
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Error deleting jobs";
+    console.error("[DELETE /api/jobs] Error:", err);
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

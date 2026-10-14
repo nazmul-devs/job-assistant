@@ -7,6 +7,7 @@ import { FilterBar, FilterState } from "@/components/FilterBar";
 import { JobsTable, JobItem } from "@/components/JobsTable";
 import { JobDetailModal } from "@/components/JobDetailModal";
 import { ProfileModal } from "@/components/ProfileModal";
+import { CleanupModal } from "@/components/CleanupModal";
 import { ApplicationStatus } from "@/types/job";
 
 export default function HomePage() {
@@ -20,6 +21,7 @@ export default function HomePage() {
   const [selectedJob, setSelectedJob] = useState<JobItem | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isCleanupOpen, setIsCleanupOpen] = useState(false);
 
   const [filters, setFilters] = useState<FilterState>({
     search: "",
@@ -29,6 +31,7 @@ export default function HomePage() {
     remoteOnly: false,
     worldwideOnly: false,
     sort: "highest_score",
+    dateRange: "all",
   });
 
   const [pagination, setPagination] = useState({
@@ -69,6 +72,9 @@ export default function HomePage() {
         if (currentFilters.remoteOnly) params.set("remoteOnly", "true");
         if (currentFilters.worldwideOnly) params.set("worldwideOnly", "true");
         if (currentFilters.sort) params.set("sort", currentFilters.sort);
+        if (currentFilters.dateRange && currentFilters.dateRange !== "all") {
+          params.set("dateRange", currentFilters.dateRange);
+        }
         params.set("page", String(pageNum));
         params.set("limit", "25");
 
@@ -207,6 +213,32 @@ export default function HomePage() {
     setIsDetailOpen(true);
   };
 
+  const handleDeleteJob = async (jobId: string) => {
+    try {
+      const res = await fetch(`/api/jobs/${jobId}`, {
+        method: "DELETE",
+      });
+      const json = await res.json();
+      if (json.success) {
+        setJobs((prev) => prev.filter((j) => j.id !== jobId));
+        setPagination((prev) => ({
+          ...prev,
+          totalCount: Math.max(0, prev.totalCount - 1),
+        }));
+        if (selectedJob && selectedJob.id === jobId) {
+          setIsDetailOpen(false);
+          setSelectedJob(null);
+        }
+        fetchStats();
+      } else {
+        alert(json.error || "Failed to delete job");
+      }
+    } catch (err) {
+      console.error("Failed to delete job:", err);
+      alert("Error deleting job");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
       <Navbar
@@ -257,9 +289,11 @@ export default function HomePage() {
               remoteOnly: false,
               worldwideOnly: false,
               sort: "highest_score",
+              dateRange: "all",
             });
             setPagination((p) => ({ ...p, page: 1 }));
           }}
+          onOpenCleanup={() => setIsCleanupOpen(true)}
         />
 
         {/* Jobs Table */}
@@ -272,6 +306,7 @@ export default function HomePage() {
           }
           onStatusChange={handleStatusChange}
           onViewDetails={handleViewDetails}
+          onDeleteJob={handleDeleteJob}
         />
       </main>
 
@@ -281,6 +316,17 @@ export default function HomePage() {
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
         onUpdateStatusAndNotes={handleUpdateStatusAndNotes}
+        onDeleteJob={handleDeleteJob}
+      />
+
+      {/* Cleanup Stale Jobs Modal */}
+      <CleanupModal
+        isOpen={isCleanupOpen}
+        onClose={() => setIsCleanupOpen(false)}
+        onCleanupSuccess={(_count) => {
+          fetchStats();
+          fetchJobs(filters, 1);
+        }}
       />
 
       {/* Candidate Profile Modal */}
